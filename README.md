@@ -2,6 +2,14 @@
 
 ## Development:
 
+### Terminal 1:
+
+- docker compose up (Postgres only)
+
+### Terminal 2:
+
+- npm run dev (Node.js APP)
+
 ### docker compose up
 
 - nodemon

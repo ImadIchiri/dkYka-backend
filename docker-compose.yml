@@ -25,24 +25,24 @@ services:
         max-size: "10m"
         max-file: "3"
   # Node.js Application
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: dkyka_api_server_container
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - .env
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: npm run dev
-    networks:
-      - backend
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   container_name: dkyka_api_server_container
+  #   ports:
+  #     - "8085:8085"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #   command: npm run dev
+  #   networks:
+  #     - backend
 
 networks:
   backend:
