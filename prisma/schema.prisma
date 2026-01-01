@@ -12,3 +12,400 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+//////////////////////////////
+// ENUMS
+//////////////////////////////
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum StoryVisibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+}
+
+//////////////////////////////
+// AUTH & RBAC
+//////////////////////////////
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  username        String   @unique
+  password        String
+  isEmailVerified Boolean  @default(false)
+  isPrivate       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  roleId String?
+  role   Role?   @relation(fields: [roleId], references: [id])
+
+  profile         Profile?
+  privacySettings PrivacySettings?
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+
+  posts         Post[]
+  comments      Comment[]
+  stories       Story[]
+  messagesSent  Message[]      @relation("MessageSender")
+  messagesRecv  Message[]      @relation("MessageReceiver")
+  notifications Notification[]
+
+  follows   Follow[] @relation("Follower")
+  followers Follow[] @relation("Following")
+
+  communityMember CommunityMember[]
+
+  archived       Archive[]
+  deletedItems   DeletedItem[]
+  medias         Media[]
+  storyViews     StoryView[]
+  storyReactions StoryReaction[]
+  storyReplies   StoryReply[]
+  storyReports   StoryReport[]
+  storyHides     StoryHide[]
+  blockedUsers   StoryBlock[]    @relation("Blocker")
+  blockedBy      StoryBlock[]    @relation("Blocked")
+  communityPosts CommunityPost[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  permissions RolePermission[]
+  users       User[]
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  ipAddress String
+  device    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+//////////////////////////////
+// PROFILE & PRIVACY
+//////////////////////////////
+
+model Profile {
+  id         String  @id @default(uuid())
+  userId     String  @unique
+  fullName   String?
+  bio        String?
+  avatarUrl  String?
+  coverImage String?
+  location   String?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PrivacySettings {
+  id                String @id @default(uuid())
+  userId            String @unique
+  profileVisibility String
+  postVisibility    String
+
+  storyVisibility     StoryVisibility
+  allowStoryReplies   Boolean
+  allowStoryReactions Boolean
+
+  allowMessagesFrom String
+  allowCommentsFrom String
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+//////////////////////////////
+// POSTS & MEDIA
+//////////////////////////////
+
+model Post {
+  id        String   @id @default(uuid())
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  author   User      @relation(fields: [authorId], references: [id])
+  comments Comment[]
+  media    Media[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model Media {
+  id              String  @id @default(uuid())
+  ownerId         String
+  postId          String?
+  communityPostId String?
+  storyId         String?
+
+  type         MediaType
+  url          String
+  thumbnailUrl String?
+  createdAt    DateTime  @default(now())
+
+  owner         User           @relation(fields: [ownerId], references: [id])
+  post          Post?          @relation(fields: [postId], references: [id])
+  communityPost CommunityPost? @relation(fields: [communityPostId], references: [id])
+  story         Story?         @relation(fields: [storyId], references: [id])
+}
+
+//////////////////////////////
+// STORIES (AYMEN – FINAL)
+//////////////////////////////
+
+model Story {
+  id       String @id @default(uuid())
+  authorId String
+
+  mediaUrl  String
+  mediaType MediaType
+  caption   String?
+
+  visibility StoryVisibility
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  isActive   Boolean   @default(true)
+  isArchived Boolean   @default(false)
+  archivedAt DateTime?
+
+  allowReplies   Boolean
+  allowReactions Boolean
+
+  author    User            @relation(fields: [authorId], references: [id])
+  views     StoryView[]
+  reactions StoryReaction[]
+  replies   StoryReply[]
+  reports   StoryReport[]
+  hides     StoryHide[]
+  media     Media[]
+}
+
+model StoryView {
+  id       String   @id @default(uuid())
+  storyId  String
+  viewerId String
+  viewedAt DateTime @default(now())
+
+  story  Story @relation(fields: [storyId], references: [id])
+  viewer User  @relation(fields: [viewerId], references: [id])
+}
+
+model StoryReaction {
+  id           String   @id @default(uuid())
+  storyId      String
+  userId       String
+  reactionType String
+  createdAt    DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model StoryReply {
+  id        String   @id @default(uuid())
+  storyId   String
+  senderId  String
+  message   String
+  createdAt DateTime @default(now())
+
+  story  Story @relation(fields: [storyId], references: [id])
+  sender User  @relation(fields: [senderId], references: [id])
+}
+
+model StoryReport {
+  id         String       @id @default(uuid())
+  storyId    String
+  reporterId String
+  reason     String
+  status     ReportStatus
+  createdAt  DateTime     @default(now())
+
+  story    Story @relation(fields: [storyId], references: [id])
+  reporter User  @relation(fields: [reporterId], references: [id])
+}
+
+model StoryHide {
+  id      String @id @default(uuid())
+  storyId String
+  userId  String
+
+  story Story @relation(fields: [storyId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model StoryBlock {
+  id        String @id @default(uuid())
+  blockerId String
+  blockedId String
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id])
+  blocked User @relation("Blocked", fields: [blockedId], references: [id])
+}
+
+//////////////////////////////
+// MESSAGING & NOTIFICATIONS
+//////////////////////////////
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("MessageSender", fields: [senderId], references: [id])
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+//////////////////////////////
+// COMMUNITY
+//////////////////////////////
+
+model Community {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  coverImage  String?
+  visibility  String
+  createdAt   DateTime @default(now())
+
+  members CommunityMember[]
+  posts   CommunityPost[]
+}
+
+model CommunityMember {
+  id          String   @id @default(uuid())
+  communityId String
+  userId      String
+  role        String
+  joinedAt    DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([communityId, userId])
+}
+
+model CommunityPost {
+  id          String   @id @default(uuid())
+  communityId String
+  authorId    String
+  content     String
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id])
+  media     Media[]
+}
+
+//////////////////////////////
+// SYSTEM TABLES
+//////////////////////////////
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id])
+  following User @relation("Following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+model Archive {
+  id         String   @id @default(uuid())
+  userId     String
+  entityType String
+  entityId   String
+  archivedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model DeletedItem {
+  id         String   @id @default(uuid())
+  userId     String
+  entityType String
+  entityId   String
+  deletedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
