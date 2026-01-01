@@ -79,6 +79,7 @@ model User {
   blockedUsers   StoryBlock[]    @relation("Blocker")
   blockedBy      StoryBlock[]    @relation("Blocked")
   communityPosts CommunityPost[]
+  reactions CommentReaction[]
 }
 
 model Role {
@@ -191,7 +192,23 @@ model Comment {
 
   post   Post @relation(fields: [postId], references: [id])
   author User @relation(fields: [authorId], references: [id])
+  reactions CommentReaction[] 
 }
+
+model CommentReaction {
+  id        String   @id @default(uuid())
+  type      String   // like, love, haha
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([commentId, userId])
+}
+
 
 model Media {
   id              String  @id @default(uuid())
