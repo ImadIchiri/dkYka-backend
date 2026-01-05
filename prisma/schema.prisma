@@ -176,6 +176,7 @@ model Post {
   authorId  String
   content   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   author   User      @relation(fields: [authorId], references: [id])
   comments Comment[]
@@ -203,6 +204,7 @@ model Media {
   type         MediaType
   url          String
   thumbnailUrl String?
+  updatedAt    DateTime @updatedAt
   createdAt    DateTime  @default(now())
 
   owner         User           @relation(fields: [ownerId], references: [id])
