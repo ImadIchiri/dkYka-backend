@@ -3,14 +3,19 @@ import { prisma } from "../../lib/prisma";
 /*
   Get Comments By Post
 */
-export const getCommentsByPost = (postId: string) => {
-  return prisma.comment.findMany({
+export const getCommentsByPost = async (postId: string) => {
+  const comments = await prisma.comment.findMany({
     where: { postId },
     include: {
       author: {
         select: {
           id: true,
-          email: true,
+          username: true,
+          user: {
+            select: {
+              email: true,
+            },
+          },
         },
       },
       reactions: {
@@ -23,7 +28,13 @@ export const getCommentsByPost = (postId: string) => {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  return comments.map(comment => ({
+    ...comment,
+    authorEmail: comment.author.user.email,
+  }));
 };
+
 
 /*
   Create Comment

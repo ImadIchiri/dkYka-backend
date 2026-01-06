@@ -3,6 +3,21 @@ import * as commentService from "../../services/commentaire";
 import { prisma } from "../../lib/prisma";
 import { getIO } from "../../socket"; 
 
+// à enlevé après
+
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+    }
+
+    interface Request {
+      user?: User;
+      email?: string;
+    }
+  }
+}
+
 /*
   Get Comments By Post
 */
@@ -39,7 +54,13 @@ export const createComment = async (req: Request, res: Response) => {
   try {
     const { content } = req.body;
     const { postId } = req.params;
-    const authorId = req.user.id;
+    const authorId = req.user?.id;
+    if (!authorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
     if (!postId) {
       return res.status(400).json({
@@ -73,7 +94,7 @@ export const createComment = async (req: Request, res: Response) => {
       authorId,
     });
 
-    // 🔥 EMIT SOCKET.IO (REALTIME)
+    // EMIT SOCKET.IO (REALTIME)
     const io = getIO();
     io.to(`post:${postId}`).emit("comment:new", comment);
 
@@ -96,7 +117,7 @@ export const updateComment = async (req: Request, res: Response) => {
   try {
     const { commentId } = req.params;
     const { content } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     if (!commentId) {
       return res.status(400).json({
@@ -143,7 +164,7 @@ export const updateComment = async (req: Request, res: Response) => {
 export const deleteComment = async (req: Request, res: Response) => {
   try {
     const { commentId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     if (!commentId) {
       return res.status(400).json({
@@ -195,7 +216,13 @@ export const reactToComment = async (req: Request, res: Response) => {
   try {
     const { commentId } = req.params;
     const { type } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
     if (!commentId) {
       return res.status(400).json({
