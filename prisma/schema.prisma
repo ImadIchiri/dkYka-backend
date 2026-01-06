@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file
 
 generator client {
   provider = "prisma-client"
@@ -13,10 +9,7 @@ datasource db {
   provider = "postgresql"
 }
 
-//////////////////////////////
-// ENUMS
-//////////////////////////////
-
+// --- ENUMS ---
 enum MediaType {
   IMAGE
   VIDEO
@@ -34,17 +27,12 @@ enum ReportStatus {
   RESOLVED
 }
 
-//////////////////////////////
-// AUTH & RBAC
-//////////////////////////////
-
+// --- AUTH & RBAC ---
 model User {
   id              String   @id @default(uuid())
   email           String   @unique
-  username        String   @unique
   password        String
   isEmailVerified Boolean  @default(false)
-  isPrivate       Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -79,7 +67,6 @@ model User {
   blockedUsers   StoryBlock[]    @relation("Blocker")
   blockedBy      StoryBlock[]    @relation("Blocked")
   communityPosts CommunityPost[]
-  reactions CommentReaction[]
 }
 
 model Role {
@@ -113,12 +100,12 @@ model RolePermission {
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  hashedToken String   @unique
+  userId      String
+  expiresAt   DateTime
+  revoked     Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -136,25 +123,54 @@ model AuditLog {
   user User @relation(fields: [userId], references: [id])
 }
 
-//////////////////////////////
-// PROFILE & PRIVACY
-//////////////////////////////
-
+// --- PROFILE ---
 model Profile {
   id         String  @id @default(uuid())
   userId     String  @unique
+  username   String  @unique
   fullName   String?
   bio        String?
   avatarUrl  String?
   coverImage String?
   location   String?
+  isPrivate  Boolean @default(false)
 
-  user User @relation(fields: [userId], references: [id])
+  posts    Post[]
+  comments Comment[]
+  stories  Story[]
+  medias   Media[]
+
+  messagesSent Message[] @relation("MessageSender")
+  messagesRecv Message[] @relation("MessageReceiver")
+
+  notifications Notification[]
+
+  follows   Follow[] @relation("Follower")
+  followers Follow[] @relation("Following")
+
+  communityMember CommunityMember[]
+  communityPosts  CommunityPost[]
+
+  storyViews     StoryView[]
+  storyReactions StoryReaction[]
+  storyReplies   StoryReply[]
+  storyReports   StoryReport[]
+  storyHides     StoryHide[]
+  blockedUsers   StoryBlock[]    @relation("Blocker")
+  blockedBy      StoryBlock[]    @relation("Blocked")
+
+  archived     Archive[]
+  deletedItems DeletedItem[]
+
+  privacySettings PrivacySettings?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PrivacySettings {
-  id                String @id @default(uuid())
-  userId            String @unique
+  id        String @id @default(uuid())
+  profileId String @unique
+
   profileVisibility String
   postVisibility    String
 
@@ -165,20 +181,17 @@ model PrivacySettings {
   allowMessagesFrom String
   allowCommentsFrom String
 
-  user User @relation(fields: [userId], references: [id])
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 }
 
-//////////////////////////////
-// POSTS & MEDIA
-//////////////////////////////
-
+// --- POSTS & MEDIA ---
 model Post {
   id        String   @id @default(uuid())
   authorId  String
   content   String
   createdAt DateTime @default(now())
 
-  author   User      @relation(fields: [authorId], references: [id])
+  author   Profile   @relation(fields: [authorId], references: [id])
   comments Comment[]
   media    Media[]
 }
@@ -192,23 +205,7 @@ model Comment {
 
   post   Post @relation(fields: [postId], references: [id])
   author User @relation(fields: [authorId], references: [id])
-  reactions CommentReaction[] 
 }
-
-model CommentReaction {
-  id        String   @id @default(uuid())
-  type      String   // like, love, haha
-  userId    String
-  commentId String
-  createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-
-  comment Comment @relation(fields: [commentId], references: [id])
-
-  @@unique([commentId, userId])
-}
-
 
 model Media {
   id              String  @id @default(uuid())
@@ -222,16 +219,13 @@ model Media {
   thumbnailUrl String?
   createdAt    DateTime  @default(now())
 
-  owner         User           @relation(fields: [ownerId], references: [id])
+  owner         Profile        @relation(fields: [ownerId], references: [id])
   post          Post?          @relation(fields: [postId], references: [id])
   communityPost CommunityPost? @relation(fields: [communityPostId], references: [id])
   story         Story?         @relation(fields: [storyId], references: [id])
 }
 
-//////////////////////////////
-// STORIES (AYMEN – FINAL)
-//////////////////////////////
-
+// --- STORIES ---
 model Story {
   id       String @id @default(uuid())
   authorId String
@@ -252,7 +246,7 @@ model Story {
   allowReplies   Boolean
   allowReactions Boolean
 
-  author    User            @relation(fields: [authorId], references: [id])
+  author    Profile         @relation(fields: [authorId], references: [id])
   views     StoryView[]
   reactions StoryReaction[]
   replies   StoryReply[]
@@ -267,8 +261,8 @@ model StoryView {
   viewerId String
   viewedAt DateTime @default(now())
 
-  story  Story @relation(fields: [storyId], references: [id])
-  viewer User  @relation(fields: [viewerId], references: [id])
+  story  Story   @relation(fields: [storyId], references: [id])
+  viewer Profile @relation(fields: [viewerId], references: [id])
 }
 
 model StoryReaction {
@@ -278,8 +272,8 @@ model StoryReaction {
   reactionType String
   createdAt    DateTime @default(now())
 
-  story Story @relation(fields: [storyId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  story Story   @relation(fields: [storyId], references: [id])
+  user  Profile @relation(fields: [userId], references: [id])
 }
 
 model StoryReply {
@@ -289,8 +283,8 @@ model StoryReply {
   message   String
   createdAt DateTime @default(now())
 
-  story  Story @relation(fields: [storyId], references: [id])
-  sender User  @relation(fields: [senderId], references: [id])
+  story  Story   @relation(fields: [storyId], references: [id])
+  sender Profile @relation(fields: [senderId], references: [id])
 }
 
 model StoryReport {
@@ -301,8 +295,8 @@ model StoryReport {
   status     ReportStatus
   createdAt  DateTime     @default(now())
 
-  story    Story @relation(fields: [storyId], references: [id])
-  reporter User  @relation(fields: [reporterId], references: [id])
+  story    Story   @relation(fields: [storyId], references: [id])
+  reporter Profile @relation(fields: [reporterId], references: [id])
 }
 
 model StoryHide {
@@ -310,8 +304,8 @@ model StoryHide {
   storyId String
   userId  String
 
-  story Story @relation(fields: [storyId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  story Story   @relation(fields: [storyId], references: [id])
+  user  Profile @relation(fields: [userId], references: [id])
 }
 
 model StoryBlock {
@@ -319,14 +313,11 @@ model StoryBlock {
   blockerId String
   blockedId String
 
-  blocker User @relation("Blocker", fields: [blockerId], references: [id])
-  blocked User @relation("Blocked", fields: [blockedId], references: [id])
+  blocker Profile @relation("Blocker", fields: [blockerId], references: [id])
+  blocked Profile @relation("Blocked", fields: [blockedId], references: [id])
 }
 
-//////////////////////////////
-// MESSAGING & NOTIFICATIONS
-//////////////////////////////
-
+// --- MESSAGING & NOTIFICATIONS ---
 model Message {
   id         String   @id @default(uuid())
   senderId   String
@@ -335,25 +326,22 @@ model Message {
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  sender   User @relation("MessageSender", fields: [senderId], references: [id])
-  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender   Profile @relation("MessageSender", fields: [senderId], references: [id])
+  receiver Profile @relation("MessageReceiver", fields: [receiverId], references: [id])
 }
 
 model Notification {
   id        String   @id @default(uuid())
-  userId    String
+  profileId String
   type      String
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  profile Profile @relation(fields: [profileId], references: [id])
 }
 
-//////////////////////////////
-// COMMUNITY
-//////////////////////////////
-
+// --- COMMUNITY ---
 model Community {
   id          String   @id @default(uuid())
   name        String
@@ -369,14 +357,14 @@ model Community {
 model CommunityMember {
   id          String   @id @default(uuid())
   communityId String
-  userId      String
+  profileId   String
   role        String
   joinedAt    DateTime @default(now())
 
   community Community @relation(fields: [communityId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
+  profile   Profile   @relation(fields: [profileId], references: [id])
 
-  @@unique([communityId, userId])
+  @@unique([communityId, profileId])
 }
 
 model CommunityPost {
@@ -387,42 +375,39 @@ model CommunityPost {
   createdAt   DateTime @default(now())
 
   community Community @relation(fields: [communityId], references: [id])
-  author    User      @relation(fields: [authorId], references: [id])
+  author    Profile   @relation(fields: [authorId], references: [id])
   media     Media[]
 }
 
-//////////////////////////////
-// SYSTEM TABLES
-//////////////////////////////
-
+// --- SYSTEM TABLES ---
 model Follow {
   id          String   @id @default(uuid())
   followerId  String
   followingId String
   createdAt   DateTime @default(now())
 
-  follower  User @relation("Follower", fields: [followerId], references: [id])
-  following User @relation("Following", fields: [followingId], references: [id])
+  follower  Profile @relation("Follower", fields: [followerId], references: [id])
+  following Profile @relation("Following", fields: [followingId], references: [id])
 
   @@unique([followerId, followingId])
 }
 
 model Archive {
   id         String   @id @default(uuid())
-  userId     String
+  profileId  String
   entityType String
   entityId   String
   archivedAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  profile Profile @relation(fields: [profileId], references: [id])
 }
 
 model DeletedItem {
   id         String   @id @default(uuid())
-  userId     String
+  profileId  String
   entityType String
   entityId   String
   deletedAt  DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  profile Profile @relation(fields: [profileId], references: [id])
 }

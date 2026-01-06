@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import * as commentService from "../../services/commentaire";
 import { prisma } from "../../lib/prisma";
+import { getIO } from "../../socket"; // 
 
 /*
   Get Comments By Post
@@ -32,7 +33,7 @@ export const getCommentsByPost = async (req: Request, res: Response) => {
 };
 
 /*
-  Create Comment
+  Create Comment (🔥 REALTIME SOCKET 🔥)
 */
 export const createComment = async (req: Request, res: Response) => {
   try {
@@ -65,18 +66,23 @@ export const createComment = async (req: Request, res: Response) => {
       });
     }
 
+    // ✅ Création en base
     const comment = await commentService.createComment({
       content,
       postId,
       authorId,
     });
 
-    res.status(201).json({
+    // 🔥 EMIT SOCKET.IO (REALTIME)
+    const io = getIO();
+    io.to(`post:${postId}`).emit("comment:new", comment);
+
+    return res.status(201).json({
       success: true,
       data: comment,
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
