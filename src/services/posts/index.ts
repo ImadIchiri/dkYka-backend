@@ -7,6 +7,7 @@ export const getAllPosts=async()=>{
         include:{
             author:true,
             media:true,
+            comments:true
         }
     });
 };
@@ -18,6 +19,7 @@ export const getPostsById=async(id:string)=>{
         include:{
             author:true,
             media:true,
+            comments:true
         }
     });
 };
@@ -48,7 +50,8 @@ export const deletePost= async(id:string)=>{
     return await prisma.post.delete({
         where :{id},
         include:{
-            media:true
+            media:true,
+            comments:true
         }
     });
 };

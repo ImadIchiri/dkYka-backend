@@ -1,44 +1,45 @@
 import type { Request, Response } from "express";
 import * as mediaService from "../../services/media/index";
-import { uploadToFirebase, deleteFromFirebase } from "../../lib/firebase";
-import type { MediaCreate, MediaUpdate } from "../../types/media";
+import { deleteFromFirebase } from "../../lib/firebase";
+import type { MediaUpdate } from "../../types/media";
 
 // Créer un media avec upload
 
 export const uploadMedia = async (req: Request, res: Response) => {
   try {
-    const { ownerId, type } = req.body;
+    const { ownerId, type, postId, storyId, communityPostId } = req.body;
 
-    if (!ownerId || !type || !req.file) {
-      return res.status(400).json({ error: "ownerId, type et fichier sont requis" });
+    if (!req.file || !ownerId || !type) {
+      return res.status(400).json({ error: "file, ownerId et type requis" });
     }
 
-    const firebasePath = `media/${req.file.originalname}`;
-    const url = await uploadToFirebase(req.file.buffer, firebasePath);
+  // Validation du type de media
 
-    const data: MediaCreate = {
+    if (!["IMAGE", "VIDEO"].includes(type)) {
+      return res.status(400).json({
+        error: "Invalid media type. Allowed values: IMAGE, VIDEO",
+      });
+    }
+    const media = await mediaService.uploadAndCreateMedia({
+      file: req.file,
       ownerId,
-      postId: req.body.postId,
-      communityPostId: req.body.communityPostId,
-      storyId: req.body.storyId,
       type,
-      url,
-    };
-
-    const newMedia = await mediaService.createMedia(data);
+      postId,
+      storyId,
+      communityPostId,
+    });
 
     return res.status(201).json({
       success: true,
-      message: "Media uploadé avec succès",
-      data: newMedia,
+      data: media,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Impossible de créer le media" });
+    return res.status(500).json({ error: "Upload media failed" });
   }
 };
 
-// Récupérer tous les media
+// Récupérer tous les medias
 
 export const getAllMedia = async (req: Request, res: Response) => {
   try {
