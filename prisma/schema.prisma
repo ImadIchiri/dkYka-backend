@@ -34,6 +34,11 @@ enum ReportStatus {
   RESOLVED
 }
 
+enum ConversationType {
+  PRIVATE
+  GROUP
+}
+
 //////////////////////////////
 // AUTH & RBAC
 //////////////////////////////
@@ -47,6 +52,7 @@ model User {
   isPrivate       Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  lastSeenAt      DateTime?
 
   roleId String?
   role   Role?   @relation(fields: [roleId], references: [id])
@@ -60,7 +66,7 @@ model User {
   comments      Comment[]
   stories       Story[]
   messagesSent  Message[]      @relation("MessageSender")
-  messagesRecv  Message[]      @relation("MessageReceiver")
+  conversations ConversationParticipant[]
   notifications Notification[]
 
   follows   Follow[] @relation("Follower")
@@ -311,15 +317,45 @@ model StoryBlock {
 //////////////////////////////
 
 model Message {
-  id         String   @id @default(uuid())
-  senderId   String
-  receiverId String
-  content    String
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  isEdited       Boolean  @default(false)
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  seenAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  sender   User @relation("MessageSender", fields: [senderId], references: [id])
-  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender        User         @relation("MessageSender", fields: [senderId], references: [id])
+}
+
+model Conversation {
+  id        String           @id @default(uuid())
+  type      ConversationType
+  title     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id              String   @id @default(uuid())
+  conversationId  String
+  userId          String
+  joinedAt        DateTime @default(now())
+  lastReadAt      DateTime?
+  isMuted         Boolean  @default(false)
+  isArchived      Boolean  @default(false)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([conversationId, userId])
 }
 
 model Notification {
