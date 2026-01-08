@@ -1,7 +1,16 @@
-export type Role = {
+export type RBACRole = {
   id: string;
   name: string;
   description?: string | null;
+  inherits: string[];
+  permissions: any[];
+};
+
+export type RBACPermission = {
+  code: string;
+  name: string;
+  label: string;
+  description: string;
 };
 
 export type SafeProfile = {
@@ -23,7 +32,7 @@ export type SafeUser = {
   createdAt: Date;
   updatedAt: Date;
   roleId: string | null;
-  role?: Role | null;
+  role?: RBACRole | null;
   profile?: SafeProfile | null;
 };
 
@@ -32,6 +41,7 @@ export type TokenPayload = {
   role: {
     id: string | null;
     name: string | undefined;
+    permissions: RBACPermission[];
   };
 };
 

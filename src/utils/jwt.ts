@@ -5,11 +5,18 @@ import { TokenPayload } from "../types/user";
 
 // Token Expires After '5 minutes'
 export const generateAccessToken = (user: TokenPayload) => {
+  // Extract only the 'code' from each permission
+  const permissionCodes = user.role.permissions.map((p: any) => p.code);
+
+  // The Client will receive "PERMISIIONS LIST" and not "ROLE"
   return jwt.sign(
-    { userId: user.id, role: user.role },
+    {
+      userId: user.id,
+      permissions: permissionCodes, // ["USR-U1", "PST-A1", ...]
+    },
     process.env.JWT_ACCESS_SECRET as string,
     {
-      expiresIn: "5m",
+      expiresIn: "15m",
     }
   );
 };
