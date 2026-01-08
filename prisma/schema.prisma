@@ -43,6 +43,8 @@ model User {
 
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
+  reactions CommentReaction[]
+  
 }
 
 model Role {
@@ -111,6 +113,8 @@ model Profile {
   avatarUrl  String?
   coverImage String?
   location   String?
+  dateOfBirth DateTime?
+  createdAt  DateTime @default(now())
   isPrivate  Boolean @default(false)
 
   posts    Post[]
@@ -183,7 +187,23 @@ model Comment {
 
   post   Post    @relation(fields: [postId], references: [id])
   author Profile @relation(fields: [authorId], references: [id])
+  reactions CommentReaction[]
 }
+
+model CommentReaction {
+  id        String   @id @default(uuid())
+  type      String   // like, love, haha
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([commentId, userId])
+}
+
 
 model Media {
   id              String  @id @default(uuid())
