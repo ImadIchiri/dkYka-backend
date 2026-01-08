@@ -9,9 +9,14 @@ const app: Express = express();
 const port = Number(process.env.SERVER_PORT) || 8085;
 const server = http.createServer(app);
 
+/* 🔥 MIDDLEWARES */
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+/* SOCKET */
 initSocket(server);
 
-//ROUTES
+/* ROUTES */
 app.use("/api/comments", commentRoutes);
 app.use("/api/profiles", profileRoutes);
 
