@@ -37,7 +37,6 @@ export const uploadAndCreateMedia = async ({
   });
 };
 
-
 export const getAllMedia = async () => {
   return prisma.media.findMany();
 };

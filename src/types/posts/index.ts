@@ -1,4 +1,5 @@
 export type postsCreate = {
+  id:string;
   authorId: string;
   content: string;
 };

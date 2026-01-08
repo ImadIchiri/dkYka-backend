@@ -24,9 +24,10 @@ export const getPostsById = async (req: Request, res: Response) => {
 
 export const createPosts = async (req: Request, res: Response) => {
     try {
-        const { authorId, content } = req.body;
+        const {id, authorId, content } = req.body;
 
         const created = await postsServices.createPosts({
+            id,
             authorId,
             content,
         });
