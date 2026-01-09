@@ -40,7 +40,6 @@ model User {
   isEmailVerified Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  lastSeenAt      DateTime?
 
   roleId String?
   role   Role?   @relation(fields: [roleId], references: [id])
@@ -116,6 +115,7 @@ model Profile {
   coverImage String?
   location   String?
   isPrivate  Boolean @default(false)
+  lastSeenAt      DateTime?
 
   posts    Post[]
   comments Comment[]

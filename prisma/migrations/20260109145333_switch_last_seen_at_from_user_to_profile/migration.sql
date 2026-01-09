@@ -18,7 +18,6 @@ CREATE TABLE "User" (
     "isEmailVerified" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "lastSeenAt" TIMESTAMP(3),
     "roleId" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -90,6 +89,7 @@ CREATE TABLE "Profile" (
     "coverImage" TEXT,
     "location" TEXT,
     "isPrivate" BOOLEAN NOT NULL DEFAULT false,
+    "lastSeenAt" TIMESTAMP(3),
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
 );
