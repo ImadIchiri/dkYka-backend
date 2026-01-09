@@ -27,6 +27,11 @@ enum ReportStatus {
   RESOLVED
 }
 
+enum ConversationType {
+  PRIVATE
+  GROUP
+}
+
 // --- AUTH & RBAC ---
 model User {
   id              String   @id @default(uuid())
@@ -35,6 +40,7 @@ model User {
   isEmailVerified Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  lastSeenAt      DateTime?
 
   roleId String?
   role   Role?   @relation(fields: [roleId], references: [id])
@@ -123,7 +129,7 @@ model Profile {
   medias   Media[]
 
   messagesSent Message[] @relation("MessageSender")
-  messagesRecv Message[] @relation("MessageReceiver")
+  conversations ConversationParticipant[]
 
   notifications Notification[]
 
@@ -211,6 +217,7 @@ model Media {
   postId          String?
   communityPostId String?
   storyId         String?
+  messageId       String?
 
   type         MediaType
   url          String
@@ -221,6 +228,7 @@ model Media {
   post          Post?          @relation(fields: [postId], references: [id])
   communityPost CommunityPost? @relation(fields: [communityPostId], references: [id])
   story         Story?         @relation(fields: [storyId], references: [id])
+  message       Message?       @relation(fields: [messageId], references: [id])
 }
 
 // --- STORIES ---
@@ -317,15 +325,46 @@ model StoryBlock {
 
 // --- MESSAGING & NOTIFICATIONS ---
 model Message {
-  id         String   @id @default(uuid())
-  senderId   String
-  receiverId String
-  content    String
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String?
+  isEdited       Boolean  @default(false)
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  sender   Profile @relation("MessageSender", fields: [senderId], references: [id])
-  receiver Profile @relation("MessageReceiver", fields: [receiverId], references: [id])
+  media        Media[]
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender        Profile    @relation("MessageSender", fields: [senderId], references: [id])
+}
+
+model Conversation {
+  id        String           @id @default(uuid())
+  type      ConversationType
+  title     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  lastMessageId String?
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id              String   @id @default(uuid())
+  conversationId  String
+  profileId       String
+  joinedAt        DateTime @default(now())
+  lastReadAt      DateTime?
+  isMuted         Boolean  @default(false)
+  isArchived      Boolean  @default(false)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  profile      Profile    @relation(fields: [profileId], references: [id])
+
+  @@unique([conversationId, profileId])
 }
 
 model Notification {
