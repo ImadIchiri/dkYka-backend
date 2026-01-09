@@ -24,11 +24,12 @@ export const getPostsById = async (req: Request, res: Response) => {
 
 export const createPosts = async (req: Request, res: Response) => {
     try {
-        const {id, authorId, content } = req.body;
+        const {id, groupId, authorId, content } = req.body;
 
         const created = await postsServices.createPosts({
             id,
             authorId,
+            groupId,
             content,
         });
 
@@ -43,11 +44,12 @@ export const createPosts = async (req: Request, res: Response) => {
 export const updatePosts = async (req: Request, res: Response) => {
     try {
         const id = String(req.params.id);
-        const { authorId, content } = req.body;
+        const { groupId, authorId, content } = req.body;
         const updated = await postsServices.updatePosts(
             id,
             {
                 authorId,
+                groupId,
                 content,
             }
         );

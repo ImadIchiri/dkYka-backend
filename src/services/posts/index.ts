@@ -6,6 +6,7 @@ export const getAllPosts=async()=>{
     return await prisma.post.findMany({
         include:{
             author:true,
+            group:true,
             media:true,
             comments:true
         }
@@ -18,6 +19,7 @@ export const getPostsById=async(id:string)=>{
         where: {id},
         include:{
             author:true,
+            group:true,
             media:true,
             comments:true
         }
@@ -30,6 +32,7 @@ export const createPosts = async (data: postsCreate) => {
     data,
     include: {
       author: true,
+      group:true,
     },
   });
 };
@@ -40,7 +43,8 @@ export const updatePosts=async(id:string,data:postsUpdate)=>{
         where:{id},
         data,
         include:{
-            author:true
+            author:true,
+            group:true,
         }
     });
 };
@@ -50,6 +54,7 @@ export const deletePost= async(id:string)=>{
     return await prisma.post.delete({
         where :{id},
         include:{
+            group:true,
             media:true,
             comments:true
         }

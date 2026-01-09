@@ -165,10 +165,12 @@ model Post {
   id        String   @id @default(uuid())
   authorId  String
   content   String
+  groupId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   author   Profile   @relation(fields: [authorId], references: [id])
+  group    Community? @relation(fields: [groupId],references: [id])
   comments Comment[]
   media    Media[]
 }
@@ -330,6 +332,7 @@ model Community {
 
   members CommunityMember[]
   posts   CommunityPost[]
+  post    Post[]
 }
 
 model CommunityMember {
