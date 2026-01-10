@@ -349,6 +349,7 @@ model ConversationParticipant {
   clearHistoryAt  DateTime?
   isMuted         Boolean  @default(false)
   isArchived      Boolean  @default(false)
+  isHidden        Boolean  @default(false)
 
   conversation Conversation @relation(fields: [conversationId], references: [id])
   profile      Profile    @relation(fields: [profileId], references: [id])
