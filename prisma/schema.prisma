@@ -13,6 +13,7 @@ datasource db {
 enum MediaType {
   IMAGE
   VIDEO
+  AUDIO
 }
 
 enum StoryVisibility {
@@ -30,6 +31,13 @@ enum ReportStatus {
 enum ConversationType {
   PRIVATE
   GROUP
+}
+
+enum ConversationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
 }
 
 // --- AUTH & RBAC ---
@@ -128,6 +136,7 @@ model Profile {
   dateOfBirth DateTime?
   createdAt   DateTime  @default(now())
   isPrivate   Boolean   @default(false)
+  lastSeenAt  DateTime?
 
   posts    Post[]
   comments Comment[]
@@ -330,27 +339,29 @@ model StoryBlock {
 
 // --- MESSAGING & NOTIFICATIONS ---
 model Message {
-  id             String    @id @default(uuid())
-  conversationId String
-  senderId       String
-  content        String?
-  isEdited       Boolean   @default(false)
-  deliveredAt    DateTime?
-  readAt         DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  conversationId  String
+  senderProfileId String
+  content         String?
+  isEdited        Boolean   @default(false)
+  deliveredAt     DateTime?
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   media        Media[]
   conversation Conversation @relation(fields: [conversationId], references: [id])
-  sender       Profile      @relation("MessageSender", fields: [senderId], references: [id])
+  sender       Profile      @relation("MessageSender", fields: [senderProfileId], references: [id])
 }
 
 model Conversation {
-  id            String           @id @default(uuid())
+  id            String             @id @default(uuid())
   type          ConversationType
+  status        ConversationStatus @default(PENDING)
   title         String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  avatarUrl     String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
   lastMessageId String?
 
   participants ConversationParticipant[]
@@ -363,8 +374,10 @@ model ConversationParticipant {
   profileId      String
   joinedAt       DateTime  @default(now())
   lastReadAt     DateTime?
+  clearHistoryAt DateTime?
   isMuted        Boolean   @default(false)
   isArchived     Boolean   @default(false)
+  isHidden       Boolean   @default(false)
 
   conversation Conversation @relation(fields: [conversationId], references: [id])
   profile      Profile      @relation(fields: [profileId], references: [id])
