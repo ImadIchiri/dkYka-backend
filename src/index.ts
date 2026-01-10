@@ -6,6 +6,7 @@ import { initSocket } from "./socket";
 
 import commentRoutes from "./routes/commentaire";
 import profileRoutes from "./routes/profile";
+import chatBootRoutes from "./routes/chatboot";
 
 const app: Express = express();
 app.use(express.json()); 
@@ -23,6 +24,7 @@ initSocket(server);
 // ROUTES
 app.use("/api/comments", commentRoutes);
 app.use("/api/profiles", profileRoutes);
+app.use("/api/chatboot", chatBootRoutes);
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Express + TypeScript Server");
