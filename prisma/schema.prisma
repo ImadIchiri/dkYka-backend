@@ -346,6 +346,7 @@ model ConversationParticipant {
   profileId       String
   joinedAt        DateTime @default(now())
   lastReadAt      DateTime?
+  clearHistoryAt  DateTime?
   isMuted         Boolean  @default(false)
   isArchived      Boolean  @default(false)
 
