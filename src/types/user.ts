@@ -1,17 +1,20 @@
+export type RolePermissionJoin = {
+  permission: RBACPermission;
+};
+
 export type RBACRole = {
   id: string;
   name: string;
   description?: string | null;
 
-  inherits: string[];
-  permissions: RBACPermission[];
+  permissions: RolePermissionJoin[];
 };
 
 export type RBACPermission = {
   code: string;
   name: string;
   label: string;
-  description: string;
+  description?: string | null;
 };
 
 export type SafeProfile = {
@@ -26,39 +29,34 @@ export type SafeProfile = {
   isPrivate: boolean;
 };
 
+// Can be send inside 'body' to display User's Infos (withoud doing more API requests)
 export type SafeUser = {
   id: string;
   email: string;
   isEmailVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
   roleId: string | null;
-  role?: RBACRole | null;
   profile?: SafeProfile | null;
 };
 
 export type TokenPayload = {
-  id: string; // UUID string
-  role: {
-    id: string | null;
-    name: string | undefined;
-    permissions: RBACPermission[];
-  };
+  id: string;
+  permissions: string[];
 };
 
+// What will be sent to the FrontEnd
+// Inside 'JWT'
 export type AuthUser = {
-  id: string;
-  email: string;
-  role: string;
+  userId: string;
   permissions: string[];
+  iat?: number; // issued at
+  exp?: number;
 };
 
 export type NewUser = {
   email: string;
   password?: string;
   roleId?: string;
-  isEmailVerified?: boolean;
-  profile?: {
+  profile: {
     create: {
       username: string;
       fullName?: string;

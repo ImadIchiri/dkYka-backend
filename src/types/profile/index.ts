@@ -7,8 +7,8 @@ export type UpdateProfileInput = {
 };
 
 export type ProfileOutput = {
-  id: string;          // profile.id
-  userId: string;      // user.id
+  id: string;
+  userId: string;
   username: string;
 
   fullName: string | null;

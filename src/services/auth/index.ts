@@ -117,3 +117,18 @@ export const emailVerificationUrl = (refreshToken: string): string =>
   `http://localhost:${
     process.env.PORT || 8080
   }/api/v1/verify-email?token=${refreshToken}`;
+
+export const sendPasswordResetEmail = async (
+  email: string,
+  userId: string,
+  token: string
+) => {
+  const resetURL = `http://localhost:5173/reset-password?id=${userId}&token=${token}`;
+
+  // Use your existing transporter logic here...
+  await emailTransporter.sendMail({
+    to: email,
+    subject: "Reset your Password",
+    html: `<p>Click <a href="${resetURL}">here</a> to reset your password. The link expires in 1 hour.</p>`,
+  });
+};

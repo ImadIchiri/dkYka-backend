@@ -1,24 +1,19 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { TokenPayload } from "../types/user";
+import { AuthUser, TokenPayload } from "../types/user";
 
-// Token Expires After '5 minutes'
+// Token Expires After '15 minutes'
 export const generateAccessToken = (user: TokenPayload) => {
-  // Extract only the 'code' from each permission
-  const permissionCodes = user.role.permissions.map((p: any) => p.code);
-
   // The Client will receive "PERMISIIONS LIST" and not "ROLE"
-  return jwt.sign(
-    {
-      userId: user.id,
-      permissions: permissionCodes, // ["USR-U1", "PST-A1", ...]
-    },
-    process.env.JWT_ACCESS_SECRET as string,
-    {
-      expiresIn: "15m",
-    }
-  );
+  const jwtUser: AuthUser = {
+    userId: user.id,
+    permissions: [...user.permissions], // ["USR-U1", "PST-A1", ...]
+  };
+
+  return jwt.sign(jwtUser, process.env.JWT_ACCESS_SECRET as string, {
+    expiresIn: "15m",
+  });
 };
 
 // Generate a random string as refreshToken
