@@ -337,6 +337,9 @@ model StoryBlock {
   blocked Profile @relation("Blocked", fields: [blockedId], references: [id])
 }
 
+// Global user blocking (across messaging/interactions)
+
+
 // --- MESSAGING & NOTIFICATIONS ---
 model Message {
   id              String    @id @default(uuid())
