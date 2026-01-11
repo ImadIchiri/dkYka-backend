@@ -1,25 +1,12 @@
 import type { Request, Response } from "express";
 import * as commentService from "../../services/commentaire";
 import { prisma } from "../../lib/prisma";
-import { getIO } from "../../socket"; 
-
-// à enlevé après
-
-declare global {
-  namespace Express {
-    interface User {
-      id: string;
-    }
-
-    interface Request {
-      user?: User;
-      email?: string;
-    }
-  }
-}
+import { getIO } from "../../socket";
 
 /*
-  Get Comments By Post
+  =========================
+  GET COMMENTS BY POST
+  =========================
 */
 export const getCommentsByPost = async (req: Request, res: Response) => {
   try {
@@ -34,13 +21,13 @@ export const getCommentsByPost = async (req: Request, res: Response) => {
 
     const comments = await commentService.getCommentsByPost(postId);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: comments,
       length: comments.length,
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -48,17 +35,19 @@ export const getCommentsByPost = async (req: Request, res: Response) => {
 };
 
 /*
-  Create Comment ( REALTIME SOCKET)
+  =========================
+  CREATE COMMENT (TEST MODE)
+  =========================
 */
 export const createComment = async (req: Request, res: Response) => {
   try {
-    const { content } = req.body;
+    const { content, authorId } = req.body;
     const { postId } = req.params;
-    const authorId = req.user?.id;
+
     if (!authorId) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
-        message: "Unauthorized",
+        message: "authorId is required (TEST MODE)",
       });
     }
 
@@ -87,14 +76,12 @@ export const createComment = async (req: Request, res: Response) => {
       });
     }
 
-    // Création en base
     const comment = await commentService.createComment({
       content,
       postId,
       authorId,
     });
 
-    // EMIT SOCKET.IO (REALTIME)
     const io = getIO();
     io.to(`post:${postId}`).emit("comment:new", comment);
 
@@ -111,18 +98,26 @@ export const createComment = async (req: Request, res: Response) => {
 };
 
 /*
-  Update Comment (Author only)
+  =========================
+  UPDATE COMMENT (TEST MODE)
+  =========================
 */
 export const updateComment = async (req: Request, res: Response) => {
   try {
     const { commentId } = req.params;
-    const { content } = req.body;
-    const userId = req.user?.id;
+    const { content, userId } = req.body;
 
     if (!commentId) {
       return res.status(400).json({
         success: false,
         message: "commentId is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required (TEST MODE)",
       });
     }
 
@@ -146,12 +141,12 @@ export const updateComment = async (req: Request, res: Response) => {
 
     const updated = await commentService.updateComment(commentId, content);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: updated,
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -159,17 +154,26 @@ export const updateComment = async (req: Request, res: Response) => {
 };
 
 /*
-  Delete Comment (Author or Post Owner)
+  =========================
+  DELETE COMMENT (TEST MODE)
+  =========================
 */
 export const deleteComment = async (req: Request, res: Response) => {
   try {
     const { commentId } = req.params;
-    const userId = req.user?.id;
+    const { userId } = req.body;
 
     if (!commentId) {
       return res.status(400).json({
         success: false,
         message: "commentId is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required (TEST MODE)",
       });
     }
 
@@ -197,12 +201,12 @@ export const deleteComment = async (req: Request, res: Response) => {
 
     await commentService.deleteComment(commentId);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Comment deleted successfully",
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -210,24 +214,26 @@ export const deleteComment = async (req: Request, res: Response) => {
 };
 
 /*
-  React To Comment
+  =========================
+  REACT TO COMMENT (TEST MODE)
+  =========================
 */
 export const reactToComment = async (req: Request, res: Response) => {
   try {
     const { commentId } = req.params;
-    const { type } = req.body;
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
+    const { type, userId } = req.body;
 
     if (!commentId) {
       return res.status(400).json({
         success: false,
         message: "commentId is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required (TEST MODE)",
       });
     }
 
@@ -244,12 +250,12 @@ export const reactToComment = async (req: Request, res: Response) => {
       type
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: reaction,
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

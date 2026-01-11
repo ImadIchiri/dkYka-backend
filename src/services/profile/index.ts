@@ -7,14 +7,17 @@ import type { UpdateProfileInput, ProfileOutput } from "../../types/profile";
 export const getMyProfile = async (userId: string): Promise<ProfileOutput | null> => {
   const profile = await prisma.profile.findUnique({
     where: { userId },
-    include: {
-      followers: true,
-      follows: true,
-      user: true,
-    },
   });
 
   if (!profile) return null;
+
+  const followersCount = await prisma.follow.count({
+    where: { followingId: profile.id },
+  });
+
+  const followingCount = await prisma.follow.count({
+    where: { followerId: profile.id },
+  });
 
   return {
     id: profile.id,
@@ -24,33 +27,54 @@ export const getMyProfile = async (userId: string): Promise<ProfileOutput | null
     bio: profile.bio,
     avatarUrl: profile.avatarUrl,
     coverImage: profile.coverImage,
-    followersCount: profile.followers.length,
-    followingCount: profile.follows.length,
+    followersCount,
+    followingCount,
   };
 };
 
 /*
-   Update my profile
+   Update my profile (upsert pour éviter l'erreur si pas de profil)
 */
 export const updateMyProfile = async (
   userId: string,
   data: UpdateProfileInput
 ): Promise<ProfileOutput> => {
   const updateData: Partial<UpdateProfileInput> = {};
-  if (data.fullName !== undefined) updateData.fullName = data.fullName;
-  if (data.bio !== undefined) updateData.bio = data.bio;
-  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
-  if (data.coverImage !== undefined) updateData.coverImage = data.coverImage;
-  if (data.username !== undefined) updateData.username = data.username;
+  const createData: any = { userId };
 
-  const profile = await prisma.profile.update({
+  if (data.fullName !== undefined) {
+    updateData.fullName = data.fullName;
+    createData.fullName = data.fullName;
+  }
+  if (data.bio !== undefined) {
+    updateData.bio = data.bio;
+    createData.bio = data.bio;
+  }
+  if (data.avatarUrl !== undefined) {
+    updateData.avatarUrl = data.avatarUrl;
+    createData.avatarUrl = data.avatarUrl;
+  }
+  if (data.coverImage !== undefined) {
+    updateData.coverImage = data.coverImage;
+    createData.coverImage = data.coverImage;
+  }
+  if (data.username !== undefined) {
+    updateData.username = data.username;
+    createData.username = data.username;
+  }
+
+  const profile = await prisma.profile.upsert({
     where: { userId },
-    data: updateData,
-    include: {
-      followers: true,
-      follows: true,
-      user: true,
-    },
+    update: updateData,
+    create: createData,
+  });
+
+  const followersCount = await prisma.follow.count({
+    where: { followingId: profile.id },
+  });
+
+  const followingCount = await prisma.follow.count({
+    where: { followerId: profile.id },
   });
 
   return {
@@ -61,8 +85,8 @@ export const updateMyProfile = async (
     bio: profile.bio,
     avatarUrl: profile.avatarUrl,
     coverImage: profile.coverImage,
-    followersCount: profile.followers.length,
-    followingCount: profile.follows.length,
+    followersCount,
+    followingCount,
   };
 };
 
@@ -74,14 +98,17 @@ export const getProfileByUsername = async (
 ): Promise<ProfileOutput | null> => {
   const profile = await prisma.profile.findUnique({
     where: { username },
-    include: {
-      followers: true,
-      follows: true,
-      user: true,
-    },
   });
 
   if (!profile) return null;
+
+  const followersCount = await prisma.follow.count({
+    where: { followingId: profile.id },
+  });
+
+  const followingCount = await prisma.follow.count({
+    where: { followerId: profile.id },
+  });
 
   return {
     id: profile.id,
@@ -91,8 +118,8 @@ export const getProfileByUsername = async (
     bio: profile.bio,
     avatarUrl: profile.avatarUrl,
     coverImage: profile.coverImage,
-    followersCount: profile.followers.length,
-    followingCount: profile.follows.length,
+    followersCount,
+    followingCount,
   };
 };
 

@@ -31,7 +31,7 @@ export const isAuthenticated = (
   //  MAINTENANT token EST FORCÉMENT string
   const token = authHeader.split(" ")[1];
   if (!token) {
-    return res.status(401).json({ message: "🚫 Unauthorized" });
+    return res.status(401).json({ message: " Unauthorized" });
   }
 
   const secret = process.env.JWT_ACCESS_SECRET;
@@ -53,7 +53,7 @@ export const isAuthenticated = (
       message:
         error.name === "TokenExpiredError"
           ? "Token expired"
-          : "🚫 Unauthorized",
+          : " Unauthorized",
     });
   }
 };

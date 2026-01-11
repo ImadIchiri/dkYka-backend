@@ -19,6 +19,11 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
+/* MIDDLEWARES */
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+/* SOCKET */
 initSocket(server);
 
 // ROUTES
