@@ -4,7 +4,7 @@ import express, { Express, Request, Response } from "express";
 import http from "http";
 import { initSocket } from "./socket";
 import cors from "cors";
-import inboxRoutes from "./routes/inbox/index";
+// import inboxRoutes from "./routes/inbox/index";
 import authRoutes from "./routes/auth";
 
 import commentRoutes from "./routes/commentaire";
@@ -30,7 +30,7 @@ app.get("/", (_req: Request, res: Response) => {
   res.send("Express + TypeScript Server");
 });
 
-app.use("/api/v1/inbox", inboxRoutes);
+// app.use("/api/v1/inbox", inboxRoutes);
 
 server.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
